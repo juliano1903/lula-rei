@@ -208,7 +208,7 @@ section{display:grid;gap:12px}
 (function(){
   // 1º turno: [% urnas, hora, Lula % válidos, Flávio % válidos]
   var T1=[[1.5,"17:27",42.2,49.2],[7.6,"17:52",41.0,50.7],[22,"18:26",40.8,51.1],[64.81,"19:06",42.3,49.6],[84.96,"19:45",43.5,48.5],[88.46,"20:11",43.8,48.2],[91,"20:21",44.0,48.0],[92.58,"20:41",44.2,47.8],[96.44,"20:55",44.6,47.5],[98.97,"21:12",44.9,47.2],[99.37,"21:30",45.0,47.2],[99.69,"21:52",45.1,47.1],[99.95,"22:51",45.2,47.0],[100,"final",45.16,47.03]];
-/*DATA*/var DATA={"data":"25/10/2026","verificado":"18:52","status":{"pausada":true,"titulo":"Contagem pausada.","msg":"O TSE suspendeu a divulgação depois que o ministro Cristiano Zanin estendeu a votação até as 19h em todo o país. A última parcial publicada é de 17h16."},"parciais":[{"pct":0.25,"h":"17:16","l":57.66,"f":42.34}],"regioes":{}};/*/DATA*/
+/*DATA*/var DATA={"data":"25/10/2026","verificado":"18:57","status":{"pausada":true,"titulo":"Contagem pausada.","msg":"O TSE suspendeu a divulgação depois que o ministro Cristiano Zanin estendeu a votação até as 19h em todo o país. A última parcial publicada é de 17h16."},"parciais":[{"pct":0.25,"h":"17:16","l":57.66,"f":42.34}],"regioes":{}};/*/DATA*/
   var BASE2=DATA.parciais.map(function(p){return {pct:p.pct,h:p.h,l:p.l,f:p.f,base:true}});
   // 1º turno final por região, só os dois (Congresso em Foco) e válidos totais (Hub Político)
   var REG=[["N","Norte",47.60,52.40,44.6,49.2],["NE","Nordeste",67.39,32.61,63.8,30.9],["CO","Centro-Oeste",36.60,63.40,32.6,56.5],["SE","Sudeste",43.59,56.41,39.7,51.4],["S","Sul",34.24,65.76,31.3,60.1]];
