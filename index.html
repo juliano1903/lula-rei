@@ -1,0 +1,343 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="Lula x Flávio: cada parcial do 2º turno de 2026 comparada com o 1º turno no mesmo percentual de urnas apuradas, nacional e por região.">
+<style>:root{color-scheme:light}body{margin:0;font:14px system-ui,-apple-system,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
+<script>
+/* recarrega a cada 60 s para pegar a parcial mais recente, sem perder a posição da página */
+(function(){
+  try{var y=sessionStorage.getItem("apur-scroll"); if(y) addEventListener("load",function(){scrollTo(0,+y)});}catch(e){}
+  setTimeout(function(){try{sessionStorage.setItem("apur-scroll",String(scrollY))}catch(e){} location.reload();},60000);
+})();
+</script>
+</head>
+<body>
+<title>Apuração Lado a Lado</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..125,400..800&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+/* Layout: uma coluna de leitura; placar no topo, gráfico das duas curvas, tabela ponto a ponto, lançamento de parciais */
+:root{
+  --bg:#f5f6f8; --surface:#ffffff; --fg:#16181d; --muted:#5d6370; --line:#dde0e6; --grid:#e8eaef;
+  --lula:#c3262f; --lula-soft:#c3262f22; --flavio:#1f55c8; --flavio-soft:#1f55c822; --warn:#9a6a00; --warn-bg:#fff4d6;
+  --display:"Archivo","Arial Narrow",system-ui,sans-serif;
+  --body:"Archivo",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#111318; --surface:#191c22; --fg:#eceef2; --muted:#9aa1ad; --line:#2b2f37; --grid:#23262d;
+  --lula:#ff6b6b; --lula-soft:#ff6b6b26; --flavio:#6f9dff; --flavio-soft:#6f9dff26; --warn:#f2c35b; --warn-bg:#2d2615; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#111318; --surface:#191c22; --fg:#eceef2; --muted:#9aa1ad; --line:#2b2f37; --grid:#23262d;
+  --lula:#ff6b6b; --lula-soft:#ff6b6b26; --flavio:#6f9dff; --flavio-soft:#6f9dff26; --warn:#f2c35b; --warn-bg:#2d2615; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.5}
+.wrap{max-width:880px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 48px;display:grid;gap:28px}
+header{display:grid;gap:6px}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+h1{font-family:var(--display);font-stretch:80%;font-weight:800;font-size:clamp(30px,6vw,44px);line-height:1.05;margin:0;text-wrap:balance}
+h2{font-family:var(--display);font-stretch:85%;font-weight:700;font-size:20px;margin:0;text-wrap:balance}
+p{margin:0;max-width:68ch}
+.lede{color:var(--muted)}
+.status{display:flex;gap:10px;align-items:flex-start;background:var(--warn-bg);color:var(--fg);border:1px solid color-mix(in srgb,var(--warn) 40%,transparent);border-radius:8px;padding:10px 12px;font-size:14px}
+.status b{color:var(--warn)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--warn);margin-top:7px;flex:none}
+
+/* placar */
+.score{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:620px){.score{grid-template-columns:1fr}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;display:grid;gap:10px;min-width:0}
+.panel h3{margin:0;font-family:var(--mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:500}
+.bar{display:flex;height:12px;border-radius:3px;overflow:hidden;background:var(--grid)}
+.bar span{display:block;height:100%}
+.nums{display:flex;justify-content:space-between;gap:8px;font-family:var(--mono);font-variant-numeric:tabular-nums}
+.nums .v{font-size:26px;font-weight:600;line-height:1.1}
+.nums .n{font-size:12px;color:var(--muted)}
+.l{color:var(--lula)} .f{color:var(--flavio)}
+.right{text-align:right}
+.delta{font-size:14px;color:var(--muted)}
+.delta strong{font-family:var(--mono);font-variant-numeric:tabular-nums;color:var(--fg)}
+
+/* controles */
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:7px;overflow:hidden;background:var(--surface)}
+.seg button{font:inherit;font-size:13px;padding:6px 12px;border:0;background:transparent;color:var(--muted);cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--fg);color:var(--bg)}
+.seg button:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(--flavio);outline-offset:2px}
+.row{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;justify-content:space-between}
+
+/* gráfico */
+.chart{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 8px 8px;overflow-x:auto}
+.chart svg{display:block;width:100%;min-width:520px;height:auto}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13px;color:var(--muted);padding:4px 8px 0}
+.legend i{display:inline-block;width:22px;height:0;border-top:2px solid;vertical-align:middle;margin-right:6px}
+.legend i.d{border-top-style:dashed}
+
+.upd{display:inline-flex;align-items:center;gap:8px;justify-self:start;margin-top:4px;padding:5px 10px;border:1px solid var(--line);border-radius:999px;background:var(--surface);font-size:13px;color:var(--muted)}
+.upd strong{font-family:var(--mono);font-variant-numeric:tabular-nums;color:var(--fg);font-weight:600}
+.pulse{width:8px;height:8px;border-radius:50%;background:#2e9d5b}
+@media (prefers-reduced-motion:no-preference){.pulse{animation:pl 2s ease-in-out infinite}@keyframes pl{50%{opacity:.35}}}
+
+/* regiões */
+.reg{border-top:1px solid var(--line);margin:12px 8px 0;padding-top:14px;display:grid;gap:12px}
+.reg-head{display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 12px;align-items:baseline}
+.reg-head h3{margin:0;font-family:var(--mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:500}
+.reg-head span{font-size:12px;color:var(--muted)}
+.rg{display:grid;grid-template-columns:110px minmax(0,1fr) 230px;gap:4px 12px;align-items:center;padding-block:6px;border-bottom:1px solid var(--grid)}
+.rg:last-child{border-bottom:0}
+table.cmp{min-width:0;width:100%;border-collapse:collapse}
+table.cmp th,table.cmp td{padding:1px 4px;border:0;font-size:12px;text-align:right;background:transparent;position:static}
+table.cmp th{font-size:10px}
+table.cmp td:first-child{text-align:left;font-family:var(--body);font-weight:600}
+table.cmp .muted{color:var(--muted)}
+table.cmp .dv{font-weight:600;color:var(--fg)}
+@media (max-width:620px){.rg{grid-template-columns:1fr auto}.rg .track{grid-column:1 / -1;grid-row:2}}
+.rg .nm{font-weight:600;font-size:14px}
+.rg .nm small{display:block;font-family:var(--mono);font-weight:400;font-size:11px;color:var(--muted)}
+.track{position:relative;display:grid;gap:3px}
+.split{position:relative;display:flex;height:16px;border-radius:3px;overflow:hidden;background:var(--grid)}
+.split span{display:block;height:100%}
+.split .wait{flex:1;display:flex;align-items:center;padding-left:8px;font-size:11px;color:var(--muted)}
+.mark{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--fg);transform:translateX(-1px)}
+.mid{position:absolute;left:50%;top:0;bottom:0;width:1px;background:var(--surface);opacity:.8}
+.prog{height:4px;border-radius:2px;background:var(--grid);overflow:hidden}
+.prog i{display:block;height:100%;background:var(--muted)}
+.rg .vals{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:12px;text-align:right;line-height:1.35}
+.rg .vals .muted{color:var(--muted)}
+
+/* tabela */
+.tbl{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;width:100%;min-width:560px;font-variant-numeric:tabular-nums}
+th,td{padding:8px 10px;text-align:right;border-bottom:1px solid var(--grid);white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+th{font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);background:var(--surface);position:sticky;top:0}
+td{font-family:var(--mono);font-size:13px}
+tr.t2 td{background:color-mix(in srgb,var(--lula) 6%,transparent)}
+tr:last-child td{border-bottom:0}
+.tag{font-family:var(--body);font-size:11px;padding:1px 6px;border-radius:4px;border:1px solid var(--line);color:var(--muted);margin-left:6px}
+
+/* formulário */
+form{display:grid;grid-template-columns:repeat(4,minmax(0,1fr)) auto;gap:10px;align-items:end}
+@media (max-width:680px){form{grid-template-columns:1fr 1fr}}
+label{display:grid;gap:4px;font-size:12px;color:var(--muted)}
+input{font:inherit;font-family:var(--mono);font-size:15px;padding:8px 10px;border:1px solid var(--line);border-radius:7px;background:var(--bg);color:var(--fg);width:100%;box-sizing:border-box}
+button.primary{font:inherit;font-weight:600;padding:9px 16px;border-radius:7px;border:0;background:var(--fg);color:var(--bg);cursor:pointer}
+button.x{font:inherit;font-size:12px;border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:5px;padding:2px 8px;cursor:pointer}
+.err{color:var(--lula);font-size:13px;min-height:1em}
+.notes{display:grid;gap:8px;font-size:14px;color:var(--muted)}
+.notes p{max-width:75ch}
+.src a{color:var(--fg)}
+section{display:grid;gap:12px}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Presidente · 2026 · apuração nacional do TSE</div>
+    <h1>Lula x Flávio no mesmo ponto da apuração</h1>
+    <p class="lede">Cada parcial do 2º turno comparada com o placar do 1º turno quando o mesmo percentual de urnas estava apurado.</p>
+    <div class="upd"><span class="pulse"></span><span>Atualizado em <strong id="upd">25/10/2026, 17:52</strong></span></div>
+  </header>
+
+  <div class="status" id="status"><span class="dot"></span><div><b id="st-t">Contagem pausada.</b> <span id="st-m">O TSE suspendeu a divulgação depois que o ministro Cristiano Zanin estendeu a votação até as 19h em todo o país. A última parcial publicada é de 17h16.</span> <span id="st-c"></span></div></div>
+
+  <section>
+    <div class="row">
+      <h2>Placar no ponto atual</h2>
+      <div class="seg" role="group" aria-label="Base do percentual do 1º turno">
+        <button type="button" id="m-two" aria-pressed="true">Só os dois</button>
+        <button type="button" id="m-raw" aria-pressed="false">Válidos totais</button>
+      </div>
+    </div>
+    <div class="score">
+      <div class="panel" id="p1"></div>
+      <div class="panel" id="p2"></div>
+    </div>
+    <p class="delta" id="delta"></p>
+  </section>
+
+  <section>
+    <h2>Evolução da apuração</h2>
+    <div class="chart">
+      <svg id="chart" viewBox="0 0 760 380" role="img" aria-label="Percentual de Lula e Flávio por percentual de urnas apuradas, 1º e 2º turno"></svg>
+      <div class="legend">
+        <span><i class="d" style="border-color:var(--lula)"></i>Lula, 1º turno</span>
+        <span><i class="d" style="border-color:var(--flavio)"></i>Flávio, 1º turno</span>
+        <span><i style="border-color:var(--lula)"></i>Lula, 2º turno</span>
+        <span><i style="border-color:var(--flavio)"></i>Flávio, 2º turno</span>
+      </div>
+      <div class="reg">
+        <div class="reg-head"><h3>Por região · 1º turno x 2º turno até agora</h3><span>Barra fina: urnas apuradas na região. Traço: Lula no 1º turno (só os dois). Var. em pontos percentuais.</span></div>
+        <div id="regions"></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Ponto a ponto</h2>
+    <div class="tbl"><table>
+      <thead><tr><th>Urnas apuradas</th><th>Hora</th><th>Lula</th><th>Flávio</th><th>Vantagem</th><th>Lula no 1º T, mesmo ponto</th><th>Diferença</th><th></th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table></div>
+  </section>
+
+  <section>
+    <h2>Lançar parcial do 2º turno</h2>
+    <form id="f" novalidate>
+      <label for="in-pct">% urnas apuradas<input id="in-pct" inputmode="decimal" placeholder="12,5"></label>
+      <label for="in-l">Lula (%)<input id="in-l" inputmode="decimal" placeholder="52,10"></label>
+      <label for="in-f">Flávio (%)<input id="in-f" inputmode="decimal" placeholder="auto"></label>
+      <label for="in-h">Hora<input id="in-h" placeholder="19:40"></label>
+      <button class="primary" type="submit">Adicionar</button>
+    </form>
+    <div class="err" id="err" aria-live="polite"></div>
+    <p class="delta" id="save-note">A página é atualizada a cada parcial divulgada. Parciais que você lança aqui ficam só no seu navegador.</p>
+  </section>
+
+  <section class="notes">
+    <h2 style="color:var(--fg)">Como ler</h2>
+    <p>No 1º turno havia outros candidatos (cerca de 7,8% dos válidos). Em "Só os dois", o percentual do 1º turno é recalculado com os votos de Lula e Flávio apenas, o que deixa a comparação com o 2º turno justa. Em "Válidos totais", aparece o número que o TSE mostrava na hora.</p>
+    <p>A ordem de chegada das urnas importa. No 1º turno, Flávio abriu na frente (Sul, Sudeste e Centro-Oeste apuram mais cedo) e Lula cresceu no fim, com o Nordeste. Por isso uma parcial só diz algo quando comparada com o mesmo ponto do turno anterior.</p>
+    <p>A primeira parcial do 2º turno (0,25%) inclui boa parte do voto no exterior, onde Lula teve cerca de 60% dos votos dos dois. Ela tende a exagerar a vantagem de Lula.</p>
+    <p>A projeção soma ao resultado final do 1º turno (Lula 48,99% contra Flávio 51,01%, só os dois) a diferença observada no ponto atual. É uma conta de referência, não uma previsão.</p>
+    <p class="src">Fontes: <a href="https://www.bloomberglinea.com.br/brasil/ao-vivo-brasil-vai-as-urnas-para-eleger-presidente-governadores-e-congresso/" target="_blank" rel="noopener">Bloomberg Línea, ao vivo do 1º turno</a> · <a href="https://www.bloomberglinea.com.br/brasil/ao-vivo-brasil-vota-no-2-turno-para-escolher-entre-lula-e-flavio-bolsonaro-como-presidente/" target="_blank" rel="noopener">Bloomberg Línea, ao vivo do 2º turno</a> · <a href="https://www.diariodocentrodomundo.com.br/lula-tem-14-pontos-a-frente-de-flavio-bolsonaro-com-025-das-urnas-apuradas" target="_blank" rel="noopener">DCM, parcial de 0,25%</a> · resultado final do 1º turno: TSE (Flávio 47,03%, Lula 45,16%) · por região: <a href="https://www.congressoemfoco.com.br/noticia/122894/flavio-vence-em-quatro-regioes-lula-domina-nordeste" target="_blank" rel="noopener">Congresso em Foco</a> e <a href="https://hubpolitico.com.br/eleicoes/2026/apuracao/presidente/regioes" target="_blank" rel="noopener">Hub Político</a>.</p>
+  </section>
+</div>
+
+<script>
+(function(){
+  // 1º turno: [% urnas, hora, Lula % válidos, Flávio % válidos]
+  var T1=[[1.5,"17:27",42.2,49.2],[7.6,"17:52",41.0,50.7],[22,"18:26",40.8,51.1],[64.81,"19:06",42.3,49.6],[84.96,"19:45",43.5,48.5],[88.46,"20:11",43.8,48.2],[91,"20:21",44.0,48.0],[92.58,"20:41",44.2,47.8],[96.44,"20:55",44.6,47.5],[98.97,"21:12",44.9,47.2],[99.37,"21:30",45.0,47.2],[99.69,"21:52",45.1,47.1],[99.95,"22:51",45.2,47.0],[100,"final",45.16,47.03]];
+/*DATA*/var DATA={"data":"25/10/2026","verificado":"18:44","status":{"pausada":true,"titulo":"Contagem pausada.","msg":"O TSE suspendeu a divulgação depois que o ministro Cristiano Zanin estendeu a votação até as 19h em todo o país. A última parcial publicada é de 17h16."},"parciais":[{"pct":0.25,"h":"17:16","l":57.66,"f":42.34}],"regioes":{}};/*/DATA*/
+  var BASE2=DATA.parciais.map(function(p){return {pct:p.pct,h:p.h,l:p.l,f:p.f,base:true}});
+  // 1º turno final por região, só os dois (Congresso em Foco) e válidos totais (Hub Político)
+  var REG=[["N","Norte",47.60,52.40,44.6,49.2],["NE","Nordeste",67.39,32.61,63.8,30.9],["CO","Centro-Oeste",36.60,63.40,32.6,56.5],["SE","Sudeste",43.59,56.41,39.7,51.4],["S","Sul",34.24,65.76,31.3,60.1]];
+  var reg2=DATA.regioes||{};
+  function renderRegions(){
+    var html=REG.map(function(r){
+      var k=r[0], d=reg2[k]||{}, ap=+d.apur||0, has=ap>0&&d.l>=0;
+      var l1=mode==="two"?r[2]:r[4], f1=mode==="two"?r[3]:r[5];
+      var bar=has?'<span style="width:'+d.l+'%;background:var(--lula)"></span><span style="flex:1;background:var(--flavio)"></span>':'<span class="wait">aguardando apuração</span>';
+      function cell(a,b){return '<td class="muted">'+fmt(a,1)+'</td><td>'+(has?fmt(b,1):'—')+'</td><td class="dv">'+(has?((b-a)>0?'+':(b-a)<0?'−':'±')+fmt(Math.abs(b-a),1):'')+'</td>';}
+      var vals='<table class="cmp"><tr><th></th><th>1º T</th><th>2º T</th><th>Var.</th></tr>'+
+        '<tr class="l"><td>Lula</td>'+cell(l1,has?d.l:0)+'</tr>'+
+        '<tr class="f"><td>Flávio</td>'+cell(f1,has?d.f:0)+'</tr></table>';
+      return '<div class="rg"><div class="nm">'+r[1]+'<small>'+fmt(ap,1)+'% apurado'+(d.h?' · '+d.h:'')+'</small></div>'+
+        '<div class="track"><div class="split">'+bar+'<i class="mid"></i><i class="mark" style="left:'+r[2]+'%" title="Lula no 1º turno: '+fmt(r[2])+'%"></i></div>'+
+        '<div class="prog" aria-label="'+fmt(ap,1)+'% das urnas apuradas"><i style="width:'+Math.min(ap,100)+'%"></i></div></div>'+
+        '<div class="vals">'+vals+'</div></div>';
+    }).join("");
+    document.getElementById("regions").innerHTML=html;
+  }
+  var KEY="apuracao-2t-parciais-v1";
+  var mode="two";
+  var extra=[], remote=[], db=null;
+  try{var s=localStorage.getItem(KEY); if(s) extra=JSON.parse(s)||[];}catch(e){extra=[];}
+  function save(){try{localStorage.setItem(KEY,JSON.stringify(extra));}catch(e){}}
+  function t1share(r){ // retorna [lula, flavio] conforme modo
+    if(mode==="two"){var s=r[2]+r[3];return [r[2]/s*100,r[3]/s*100];}
+    return [r[2],r[3]];
+  }
+  function t1at(p){ // interpola no % de urnas
+    if(p<=T1[0][0]) return {v:t1share(T1[0]),ref:T1[0][0],clamped:true};
+    for(var i=1;i<T1.length;i++){
+      if(p<=T1[i][0]){var a=T1[i-1],b=T1[i],k=(p-a[0])/(b[0]-a[0]),va=t1share(a),vb=t1share(b);
+        return {v:[va[0]+(vb[0]-va[0])*k,va[1]+(vb[1]-va[1])*k],ref:p,clamped:false};}
+    }
+    return {v:t1share(T1[T1.length-1]),ref:100,clamped:false};
+  }
+  function all2(){
+    var src=(remote.length?remote:BASE2).concat(extra), seen={}, out=[];
+    src.forEach(function(p){var k=p.pct.toFixed(2); if(!seen[k]){seen[k]=1; out.push(p);}});
+    return out.sort(function(a,b){return a.pct-b.pct});
+  }
+  function fmt(n,d){return n.toLocaleString("pt-BR",{minimumFractionDigits:d==null?2:d,maximumFractionDigits:d==null?2:d});}
+  function sg(n){return (n>0?"+":n<0?"−":"±")+fmt(Math.abs(n));}
+
+  var FINAL_L=45.16/(45.16+47.03)*100;
+
+  function render(){
+    var pts=all2(), cur=pts[pts.length-1], ref=t1at(cur.pct);
+    // painéis
+    document.getElementById("p1").innerHTML=panel("1º turno com "+fmt(ref.clamped?ref.ref:cur.pct)+"% apurado"+(mode==="two"?" · só os dois":""),ref.v[0],ref.v[1]);
+    document.getElementById("p2").innerHTML=panel("2º turno com "+fmt(cur.pct)+"% apurado · "+cur.h,cur.l,cur.f);
+    var d=cur.l-ref.v[0];
+    var txt="No mesmo ponto, Lula está <strong>"+sg(d)+" p.p.</strong> em relação ao 1º turno.";
+    if(ref.clamped) txt+=" O primeiro dado disponível do 1º turno é de "+fmt(ref.ref)+"% das urnas, por isso a comparação usa esse ponto.";
+    if(mode==="two"){var proj=FINAL_L+d; txt+=" Se essa diferença se mantivesse até o fim, o resultado seria Lula <strong>"+fmt(proj)+"%</strong> x Flávio <strong>"+fmt(100-proj)+"%</strong>.";}
+    else txt+=" Mude para \"Só os dois\" para ver a projeção.";
+    document.getElementById("delta").innerHTML=txt;
+    renderTable(pts); renderChart(pts); renderRegions();
+  }
+  function panel(t,l,f){
+    return '<h3>'+t+'</h3><div class="nums"><div><div class="v l">'+fmt(l)+'%</div><div class="n">Lula (PT)</div></div><div class="right"><div class="v f">'+fmt(f)+'%</div><div class="n">Flávio (PL)</div></div></div>'+
+      '<div class="bar" aria-hidden="true"><span style="width:'+l+'%;background:var(--lula)"></span><span style="flex:1"></span><span style="width:'+f+'%;background:var(--flavio)"></span></div>';
+  }
+  function renderTable(pts){
+    var rows=[];
+    pts.forEach(function(p,i){
+      var r=t1at(p.pct), d=p.l-r.v[0], lead=p.l-p.f;
+      rows.push({pct:p.pct,html:'<tr class="t2"><td>'+fmt(p.pct)+'%<span class="tag">2º turno</span></td><td>'+p.h+'</td><td class="l">'+fmt(p.l)+'</td><td class="f">'+fmt(p.f)+'</td><td>'+(lead>=0?'Lula ':'Flávio ')+fmt(Math.abs(lead))+'</td><td>'+fmt(r.v[0])+(r.clamped?'*':'')+'</td><td>'+sg(d)+'</td><td>'+(p.base||p.remote?'':'<button class="x" data-del="'+p.id+'" type="button">remover</button>')+'</td></tr>'});
+    });
+    T1.forEach(function(r){var v=t1share(r),lead=v[0]-v[1];
+      rows.push({pct:r[0]+0.0001,html:'<tr><td>'+fmt(r[0])+'%<span class="tag">1º turno</span></td><td>'+r[1]+'</td><td class="l">'+fmt(v[0])+'</td><td class="f">'+fmt(v[1])+'</td><td>'+(lead>=0?'Lula ':'Flávio ')+fmt(Math.abs(lead))+'</td><td>—</td><td>—</td><td></td></tr>'});});
+    rows.sort(function(a,b){return a.pct-b.pct});
+    document.getElementById("rows").innerHTML=rows.map(function(r){return r.html}).join("");
+  }
+  function renderChart(pts){
+    var W=760,H=380,L=48,R=16,T=16,B=40,y0=mode==="two"?35:35,y1=mode==="two"?65:60;
+    function X(p){return L+(W-L-R)*p/100} function Y(v){return T+(H-T-B)*(1-(v-y0)/(y1-y0))}
+    var g=[];
+    for(var v=y0;v<=y1;v+=5){g.push('<line x1="'+L+'" x2="'+(W-R)+'" y1="'+Y(v)+'" y2="'+Y(v)+'" stroke="var(--grid)" stroke-width="1"/>');
+      g.push('<text x="'+(L-8)+'" y="'+(Y(v)+4)+'" text-anchor="end" font-size="11" font-family="IBM Plex Mono,monospace" fill="var(--muted)">'+v+'%</text>');}
+    if(mode==="two") g.push('<line x1="'+L+'" x2="'+(W-R)+'" y1="'+Y(50)+'" y2="'+Y(50)+'" stroke="var(--muted)" stroke-width="1" stroke-dasharray="2 3"/><text x="'+(W-R)+'" y="'+(Y(50)-6)+'" text-anchor="end" font-size="11" fill="var(--muted)">50%</text>');
+    for(var p=0;p<=100;p+=20){g.push('<text x="'+X(p)+'" y="'+(H-B+18)+'" text-anchor="middle" font-size="11" font-family="IBM Plex Mono,monospace" fill="var(--muted)">'+p+'%</text>');}
+    g.push('<text x="'+((L+W-R)/2)+'" y="'+(H-4)+'" text-anchor="middle" font-size="12" fill="var(--muted)">urnas apuradas</text>');
+    function path(arr,idx,cv){return arr.map(function(r,i){return (i?'L':'M')+X(r[0]).toFixed(1)+' '+Y(cv(r)[idx]).toFixed(1)}).join(' ')}
+    g.push('<path d="'+path(T1,0,t1share)+'" fill="none" stroke="var(--lula)" stroke-width="2" stroke-dasharray="6 4"/>');
+    g.push('<path d="'+path(T1,1,t1share)+'" fill="none" stroke="var(--flavio)" stroke-width="2" stroke-dasharray="6 4"/>');
+    T1.forEach(function(r){var v=t1share(r);g.push('<circle cx="'+X(r[0])+'" cy="'+Y(v[0])+'" r="2.5" fill="var(--lula)"/><circle cx="'+X(r[0])+'" cy="'+Y(v[1])+'" r="2.5" fill="var(--flavio)"/>');});
+    var p2=pts.map(function(p){return [p.pct,p.l,p.f]});
+    function c2(r){return [r[1],r[2]]}
+    if(p2.length>1){g.push('<path d="'+path(p2,0,c2)+'" fill="none" stroke="var(--lula)" stroke-width="3"/>');g.push('<path d="'+path(p2,1,c2)+'" fill="none" stroke="var(--flavio)" stroke-width="3"/>');}
+    p2.forEach(function(r){g.push('<circle cx="'+X(r[0])+'" cy="'+Y(r[1])+'" r="5" fill="var(--lula)" stroke="var(--surface)" stroke-width="2"/><circle cx="'+X(r[0])+'" cy="'+Y(r[2])+'" r="5" fill="var(--flavio)" stroke="var(--surface)" stroke-width="2"/>');});
+    var last=p2[p2.length-1];
+    g.push('<text x="'+(X(last[0])+9)+'" y="'+(Y(last[1])+4)+'" font-size="12" font-weight="600" font-family="IBM Plex Mono,monospace" fill="var(--lula)">'+fmt(last[1],1)+'</text>');
+    g.push('<text x="'+(X(last[0])+9)+'" y="'+(Y(last[2])+4)+'" font-size="12" font-weight="600" font-family="IBM Plex Mono,monospace" fill="var(--flavio)">'+fmt(last[2],1)+'</text>');
+    document.getElementById("chart").innerHTML=g.join("");
+  }
+
+  function num(s){s=(s||"").trim().replace("%","").replace(",",".");return s===""?NaN:parseFloat(s);}
+  document.getElementById("f").addEventListener("submit",function(e){
+    e.preventDefault();
+    var p=num(document.getElementById("in-pct").value),l=num(document.getElementById("in-l").value),f=num(document.getElementById("in-f").value),h=document.getElementById("in-h").value.trim()||"—";
+    var err=document.getElementById("err");
+    if(!(p>0&&p<=100)){err.textContent="Informe o percentual de urnas apuradas entre 0 e 100.";return;}
+    if(!(l>=0&&l<=100)){err.textContent="Informe o percentual de Lula entre 0 e 100.";return;}
+    if(isNaN(f)) f=100-l;
+    if(Math.abs(l+f-100)>0.2){err.textContent="Lula e Flávio precisam somar 100% dos válidos. Deixe Flávio em branco para calcular sozinho.";return;}
+    err.textContent="";
+    function clear(){["in-pct","in-l","in-f","in-h"].forEach(function(id){document.getElementById(id).value=""});}
+    function local(){extra.push({id:String(Date.now()),pct:p,l:l,f:f,h:h}); save(); clear(); render();}
+    local();
+  });
+  document.getElementById("rows").addEventListener("click",function(e){
+    var id=e.target.getAttribute&&e.target.getAttribute("data-del"); if(!id) return;
+    extra=extra.filter(function(x){return x.id!==id}); save(); render();
+  });
+  function setMode(m){mode=m;document.getElementById("m-two").setAttribute("aria-pressed",m==="two");document.getElementById("m-raw").setAttribute("aria-pressed",m==="raw");render();}
+  document.getElementById("m-two").addEventListener("click",function(){setMode("two")});
+  document.getElementById("m-raw").addEventListener("click",function(){setMode("raw")});
+  (function(){var s=DATA.status||{};
+    if(s.titulo) document.getElementById("st-t").textContent=s.titulo;
+    if(s.msg) document.getElementById("st-m").textContent=s.msg;
+    document.getElementById("st-c").textContent="Última verificação: "+DATA.verificado+".";
+    document.getElementById("upd").textContent=DATA.data+", "+DATA.verificado;
+    if(s.pausada===false){var el=document.getElementById("status");el.hidden=true;}
+  })();
+  render();
+})();
+</script>
+
+</body>
+</html>
